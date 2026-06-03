@@ -5,11 +5,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # TODO: Создать и заполнить .env, ориентируясь на .env_example
 
-SECRET_KEY = config("DJANGO_SECRET_KEY")
+SECRET_KEY = config("DJANGO_SECRET_KEY", default="dev-secret-key")
 
-DEBUG = config("DJANGO_DEBUG", default=False, cast=bool)
+DEBUG = config("DJANGO_DEBUG", default=True, cast=bool)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = config("DJANGO_ALLOWED_HOSTS", default="*").split(",")
 
 
 # Application definition
@@ -21,6 +21,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "users",
+    "projects",
 ]
 
 MIDDLEWARE = [
@@ -38,7 +40,7 @@ ROOT_URLCONF = "team_finder.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / f"templates_var{config('TASK_VERSION', default='1')}"],
+        "DIRS": [BASE_DIR / f"templates_var{config('TASK_VERSION', default='3')}"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -52,19 +54,31 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "team_finder.wsgi.application"
 
+AUTH_USER_MODEL = "users.User"
+LOGIN_URL = "/users/login/"
+LOGIN_REDIRECT_URL = "/projects/list/"
+LOGOUT_REDIRECT_URL = "/projects/list/"
+
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": config("POSTGRES_DB"),
-        "USER": config("POSTGRES_USER"),
-        "PASSWORD": config("POSTGRES_PASSWORD"),
-        "HOST": config("POSTGRES_HOST", default="localhost"),
-        "PORT": config("POSTGRES_PORT", default=5432, cast=int),
-    }
+    "default": (
+        {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+        if config("USE_SQLITE", default=False, cast=bool)
+        else {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": config("POSTGRES_DB", default="team_finder"),
+            "USER": config("POSTGRES_USER", default="team_finder"),
+            "PASSWORD": config("POSTGRES_PASSWORD", default="team_finder"),
+            "HOST": config("POSTGRES_HOST", default="localhost"),
+            "PORT": config("POSTGRES_PORT", default=5436, cast=int),
+        }
+    )
 }
 
 

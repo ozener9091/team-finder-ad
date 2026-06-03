@@ -116,3 +116,30 @@
     text-decoration: underline;
     color: #666;
 }
+
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 28px;
+    flex-wrap: wrap;
+}
+
+.pagination-link {
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1px solid #cfcfcf;
+    background: #fff;
+    color: #111;
+}
+
+.pagination-link:hover {
+    background: #111;
+    color: #fff;
+}
+
+.pagination-current {
+    font-size: 14px;
+    color: #666;
+}

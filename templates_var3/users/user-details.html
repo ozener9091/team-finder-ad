@@ -46,11 +46,11 @@
                 {% include 'includes/svg/share.html' %}
             </a>
             {% if request.user.id == user.id %}
-            <a href="/users/edit-profile" class="black-button">
+            <a href="/users/edit-profile/" class="black-button">
                 {% include 'includes/svg/pen.html' %}
                 Редактировать
             </a>
-            <a href="/projects/create-project" class="black-button">
+            <a href="/projects/create-project/" class="black-button">
                 {% include 'includes/svg/plus.html' %}
                 Добавить проект
             </a>

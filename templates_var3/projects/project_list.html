@@ -1,34 +1,33 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Актуальные проекты{% endblock %}
+{% block title %}РђРєС‚СѓР°Р»СЊРЅС‹Рµ РїСЂРѕРµРєС‚С‹{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/project_list.css' %}">
 {% endblock %}
 
-{% with page_id="projects-list" %}
 {% block content %}
 <div class="project-container">
     <div class="project-header">
-        <h2 class="project-title">Актуальные проекты</h2>
-        {% if projects %}
-            <a href="/projects/create-project" class="black-button">+ Создать проект</a>
+        <h2 class="project-title">РђРєС‚СѓР°Р»СЊРЅС‹Рµ РїСЂРѕРµРєС‚С‹</h2>
+        {% if request.user.is_authenticated %}
+            <a href="/projects/create-project/" class="black-button">+ РЎРѕР·РґР°С‚СЊ РїСЂРѕРµРєС‚</a>
         {% endif %}
     </div>
-    <p class="project-subtitle">Найдите интересный проект и присоединитесь к команде</p>
+    <p class="project-subtitle">РќР°Р№РґРёС‚Рµ РёРЅС‚РµСЂРµСЃРЅС‹Р№ РїСЂРѕРµРєС‚ Рё РїСЂРёСЃРѕРµРґРёРЅРёС‚РµСЃСЊ Рє РєРѕРјР°РЅРґРµ</p>
 
     <div class="skills-filter">
-        <span class="filter-label">Фильтр по необходимым навыкам:</span>
+        <span class="filter-label">Р¤РёР»СЊС‚СЂ РїРѕ РЅРµРѕР±С…РѕРґРёРјС‹Рј РЅР°РІС‹РєР°Рј:</span>
         <div class="filter-chips">
             {% for skill in all_skills %}
-            <a href="?skill={{ skill }}"
-               class="filter-chip {% if active_skill == skill %}active{% endif %}">
+            <a href="?skill={{ skill|urlencode }}"
+               class="filter-chip {% if active_skill == skill.name %}active{% endif %}">
                 {{ skill }}
             </a>
             {% endfor %}
             {% if active_skill %}
-            <a href="/projects/list" class="filter-reset">Сбросить</a>
+            <a href="/projects/list/" class="filter-reset">РЎР±СЂРѕСЃРёС‚СЊ</a>
             {% endif %}
         </div>
     </div>
@@ -37,11 +36,22 @@
         {% for project in projects %}
         {% include 'includes/project-card.html' %}
         {% empty %}
-        {% include 'includes/empty-project-card.html' with empty_title="Пока нет проектов" empty_message="Создавайте проекты и делитесь ими с другими пользователями!" button_link="/projects/create-project" button_text="+ Создать проект" %}
+        {% include 'includes/empty-project-card.html' with empty_title="РџРѕРєР° РЅРµС‚ РїСЂРѕРµРєС‚РѕРІ" empty_message="РЎРѕР·РґР°РІР°Р№С‚Рµ РїСЂРѕРµРєС‚С‹ Рё РґРµР»РёС‚РµСЃСЊ РёРјРё СЃ РґСЂСѓРіРёРјРё РїРѕР»СЊР·РѕРІР°С‚РµР»СЏРјРё!" button_link="/projects/create-project/" button_text="+ РЎРѕР·РґР°С‚СЊ РїСЂРѕРµРєС‚" show_button=request.user.is_authenticated %}
         {% endfor %}
     </div>
+
+    {% if projects.has_other_pages %}
+    <nav class="pagination" aria-label="Pagination">
+        {% if projects.has_previous %}
+            <a class="pagination-link" href="?page={{ projects.previous_page_number }}{% if active_skill %}&skill={{ active_skill|urlencode }}{% endif %}">РќР°Р·Р°Рґ</a>
+        {% endif %}
+        <span class="pagination-current">РЎС‚СЂР°РЅРёС†Р° {{ projects.number }} РёР· {{ projects.paginator.num_pages }}</span>
+        {% if projects.has_next %}
+            <a class="pagination-link" href="?page={{ projects.next_page_number }}{% if active_skill %}&skill={{ active_skill|urlencode }}{% endif %}">Р’РїРµСЂРµРґ</a>
+        {% endif %}
+    </nav>
+    {% endif %}
+
     {% include 'includes/project-fav-toggle.js' %}
 </div>
-
 {% endblock %}
-{% endwith %}
