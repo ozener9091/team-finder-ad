@@ -12,7 +12,6 @@ from django.contrib.auth.password_validation import validate_password
 
 from .models import User
 
-
 PHONE_RE = re.compile(r"^(?:8|\+7)\d{10}$")
 
 
@@ -25,7 +24,10 @@ def validate_github_url(value: str) -> str:
         return value
     parsed = urlparse(value)
     hostname = (parsed.hostname or "").lower()
-    if parsed.scheme not in {"http", "https"} or hostname not in {"github.com", "www.github.com"}:
+    if parsed.scheme not in {"http", "https"} or hostname not in {
+        "github.com",
+        "www.github.com",
+    }:
         raise ValidationError("Ссылка должна вести именно на Github.")
     return value
 
@@ -65,8 +67,13 @@ class RegistrationForm(forms.ModelForm):
 
 
 class LoginForm(forms.Form):
-    email = forms.EmailField(label="Имейл", widget=forms.EmailInput(attrs={"autocomplete": "email"}))
-    password = forms.CharField(label="Пароль", widget=forms.PasswordInput(attrs={"autocomplete": "current-password"}))
+    email = forms.EmailField(
+        label="Имейл", widget=forms.EmailInput(attrs={"autocomplete": "email"})
+    )
+    password = forms.CharField(
+        label="Пароль",
+        widget=forms.PasswordInput(attrs={"autocomplete": "current-password"}),
+    )
 
     def clean(self):
         cleaned_data = super().clean()
@@ -96,7 +103,9 @@ class ProfileForm(forms.ModelForm):
             "surname": forms.TextInput(attrs={"autocomplete": "family-name"}),
             "about": forms.Textarea(attrs={"rows": 4}),
             "phone": forms.TextInput(attrs={"placeholder": "+7XXXXXXXXXX"}),
-            "github_url": forms.URLInput(attrs={"placeholder": "https://github.com/username"}),
+            "github_url": forms.URLInput(
+                attrs={"placeholder": "https://github.com/username"}
+            ),
         }
 
     def clean_phone(self):
@@ -104,7 +113,9 @@ class ProfileForm(forms.ModelForm):
         if not raw_phone:
             return None
         if not PHONE_RE.match(raw_phone):
-            raise ValidationError("Телефон должен быть в формате 8XXXXXXXXXX или +7XXXXXXXXXX.")
+            raise ValidationError(
+                "Телефон должен быть в формате 8XXXXXXXXXX или +7XXXXXXXXXX."
+            )
         normalized = normalize_phone(raw_phone)
         qs = User.objects.exclude(pk=self.instance.pk).filter(phone=normalized)
         if qs.exists():
@@ -154,4 +165,18 @@ class UserAdminChangeForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ("email", "password", "name", "surname", "avatar", "about", "phone", "github_url", "is_active", "is_staff", "is_superuser", "groups", "user_permissions")
+        fields = (
+            "email",
+            "password",
+            "name",
+            "surname",
+            "avatar",
+            "about",
+            "phone",
+            "github_url",
+            "is_active",
+            "is_staff",
+            "is_superuser",
+            "groups",
+            "user_permissions",
+        )

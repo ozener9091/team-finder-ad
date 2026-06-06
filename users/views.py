@@ -63,7 +63,9 @@ def edit_profile_view(request):
             return redirect(f"/users/{request.user.id}/")
     else:
         form = ProfileForm(instance=request.user)
-    return render(request, "users/edit_profile.html", {"form": form, "user": request.user})
+    return render(
+        request, "users/edit_profile.html", {"form": form, "user": request.user}
+    )
 
 
 @login_required(login_url="/users/login/")

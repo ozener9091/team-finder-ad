@@ -23,11 +23,17 @@ def _json_body(request):
 
 
 def _can_manage_project(user, project):
-    return user.is_authenticated and (user.is_staff or user.is_superuser or project.owner_id == user.id)
+    return user.is_authenticated and (
+        user.is_staff or user.is_superuser or project.owner_id == user.id
+    )
 
 
 def project_list_view(request):
-    projects_qs = Project.objects.select_related("owner").prefetch_related("participants", "skills").order_by("-created_at")
+    projects_qs = (
+        Project.objects.select_related("owner")
+        .prefetch_related("participants", "skills")
+        .order_by("-created_at")
+    )
     active_skill = request.GET.get("skill", "").strip()
     if active_skill:
         projects_qs = projects_qs.filter(skills__name__iexact=active_skill).distinct()
@@ -45,7 +51,9 @@ def project_list_view(request):
 
 def project_detail_view(request, project_id: int):
     project = get_object_or_404(
-        Project.objects.select_related("owner").prefetch_related("participants", "skills"),
+        Project.objects.select_related("owner").prefetch_related(
+            "participants", "skills"
+        ),
         pk=project_id,
     )
     return render(request, "projects/project-details.html", {"project": project})
@@ -63,7 +71,9 @@ def create_project_view(request):
             return redirect(project.get_absolute_url())
     else:
         form = ProjectForm()
-    return render(request, "projects/create-project.html", {"form": form, "is_edit": False})
+    return render(
+        request, "projects/create-project.html", {"form": form, "is_edit": False}
+    )
 
 
 @login_required(login_url="/users/login/")
@@ -79,7 +89,9 @@ def edit_project_view(request, project_id: int):
             return redirect(updated.get_absolute_url())
     else:
         form = ProjectForm(instance=project)
-    return render(request, "projects/create-project.html", {"form": form, "is_edit": True})
+    return render(
+        request, "projects/create-project.html", {"form": form, "is_edit": True}
+    )
 
 
 @login_required(login_url="/users/login/")
@@ -96,7 +108,9 @@ def complete_project_view(request, project_id: int):
 
 @login_required(login_url="/users/login/")
 def toggle_participate_view(request, project_id: int):
-    project = get_object_or_404(Project.objects.prefetch_related("participants"), pk=project_id)
+    project = get_object_or_404(
+        Project.objects.prefetch_related("participants"), pk=project_id
+    )
     if request.user == project.owner:
         return JsonResponse({"status": "error"}, status=403)
     if request.user in project.participants.all():
@@ -119,7 +133,9 @@ def project_skill_suggestions_view(request):
 
 @login_required(login_url="/users/login/")
 def add_project_skill_view(request, project_id: int):
-    project = get_object_or_404(Project.objects.prefetch_related("skills"), pk=project_id)
+    project = get_object_or_404(
+        Project.objects.prefetch_related("skills"), pk=project_id
+    )
     if not _can_manage_project(request.user, project):
         return JsonResponse({"status": "error"}, status=403)
 
@@ -156,7 +172,9 @@ def add_project_skill_view(request, project_id: int):
 
 @login_required(login_url="/users/login/")
 def remove_project_skill_view(request, project_id: int, skill_id: int):
-    project = get_object_or_404(Project.objects.prefetch_related("skills"), pk=project_id)
+    project = get_object_or_404(
+        Project.objects.prefetch_related("skills"), pk=project_id
+    )
     if not _can_manage_project(request.user, project):
         return JsonResponse({"status": "error"}, status=403)
 

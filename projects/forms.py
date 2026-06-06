@@ -13,7 +13,10 @@ def validate_github_url(value: str) -> str:
         return value
     parsed = urlparse(value)
     hostname = (parsed.hostname or "").lower()
-    if parsed.scheme not in {"http", "https"} or hostname not in {"github.com", "www.github.com"}:
+    if parsed.scheme not in {"http", "https"} or hostname not in {
+        "github.com",
+        "www.github.com",
+    }:
         raise ValidationError("Ссылка должна вести именно на Github.")
     return value
 
@@ -31,7 +34,9 @@ class ProjectForm(forms.ModelForm):
         widgets = {
             "name": forms.TextInput(attrs={"autocomplete": "off"}),
             "description": forms.Textarea(attrs={"rows": 6}),
-            "github_url": forms.URLInput(attrs={"placeholder": "https://github.com/username/repo"}),
+            "github_url": forms.URLInput(
+                attrs={"placeholder": "https://github.com/username/repo"}
+            ),
             "status": forms.Select(),
         }
 
