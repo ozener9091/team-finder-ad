@@ -1,19 +1,17 @@
-Package         Version
---------------- -------
-asgiref         3.9.1
-black           26.5.1
-click           8.4.1
-colorama        0.4.6
-Django          5.2.4
-mypy_extensions 1.1.0
-packaging       26.2
-pathspec        1.1.1
-pillow          11.3.0
-pip             23.2.1
-platformdirs    4.10.0
-psycopg2-binary 2.9.10
-python-decouple 3.8
-pytokens        0.4.1
-setuptools      65.5.0
-sqlparse        0.5.3
-tzdata          2025.2
+asgiref==3.9.1
+black==26.5.1
+click==8.4.1
+colorama==0.4.6
+Django==5.2.4
+mypy_extensions==1.1.0
+packaging==26.2
+pathspec==1.1.1
+pillow==11.3.0
+pip==23.2.1
+platformdirs==4.10.0
+psycopg2-binary==2.9.10
+python-decouple==3.8
+pytokens==0.4.1
+setuptools==65.5.0
+sqlparse==0.5.3
+tzdata==2025.2
