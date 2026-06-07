@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from django.contrib.auth import login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
-from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
+
+from team_finder.utils import paginate_queryset
 
 from .forms import LoginForm, PasswordChangeStrictForm, ProfileForm, RegistrationForm
 from .models import User
@@ -34,8 +35,7 @@ def login_view(request):
 
 def user_list_view(request):
     participants = User.objects.order_by("id")
-    paginator = Paginator(participants, 12)
-    page_obj = paginator.get_page(request.GET.get("page"))
+    page_obj = paginate_queryset(participants, request.GET.get("page"), 12)
     return render(
         request,
         "users/participants.html",

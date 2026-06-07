@@ -1,35 +1,19 @@
 from __future__ import annotations
 
 import re
-from urllib.parse import urlparse
 
 from django import forms
 from django.contrib.auth import authenticate
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.forms import ReadOnlyPasswordHashField
-from django.core.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
+
+from team_finder.utils import normalize_phone, validate_github_url
 
 from .models import User
 
 PHONE_RE = re.compile(r"^(?:8|\+7)\d{10}$")
-
-
-def normalize_phone(value: str) -> str:
-    return "+7" + value[1:] if value.startswith("8") else value
-
-
-def validate_github_url(value: str) -> str:
-    if not value:
-        return value
-    parsed = urlparse(value)
-    hostname = (parsed.hostname or "").lower()
-    if parsed.scheme not in {"http", "https"} or hostname not in {
-        "github.com",
-        "www.github.com",
-    }:
-        raise ValidationError("Ссылка должна вести именно на Github.")
-    return value
 
 
 class RegistrationForm(forms.ModelForm):

@@ -1,24 +1,10 @@
 from __future__ import annotations
 
-from urllib.parse import urlparse
-
 from django import forms
-from django.core.exceptions import ValidationError
+
+from team_finder.utils import validate_github_url
 
 from .models import Project
-
-
-def validate_github_url(value: str) -> str:
-    if not value:
-        return value
-    parsed = urlparse(value)
-    hostname = (parsed.hostname or "").lower()
-    if parsed.scheme not in {"http", "https"} or hostname not in {
-        "github.com",
-        "www.github.com",
-    }:
-        raise ValidationError("Ссылка должна вести именно на Github.")
-    return value
 
 
 class ProjectForm(forms.ModelForm):

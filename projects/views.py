@@ -1,25 +1,19 @@
 from __future__ import annotations
 
-import json
+from http import HTTPStatus
 
 from django.contrib.auth.decorators import login_required
-from django.core.paginator import Paginator
 from django.http import HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
-from users.models import User
+from team_finder.utils import json_body as _json_body
+from team_finder.utils import paginate_queryset
 
 from .forms import ProjectForm
 from .models import Project, Skill
 
-
-def _json_body(request):
-    if request.body:
-        try:
-            return json.loads(request.body.decode("utf-8"))
-        except json.JSONDecodeError:
-            return {}
-    return request.POST
+PROJECTS_PER_PAGE = 12
+SKILL_SUGGESTIONS_LIMIT = 10
 
 
 def _can_manage_project(user, project):
@@ -38,8 +32,9 @@ def project_list_view(request):
     if active_skill:
         projects_qs = projects_qs.filter(skills__name__iexact=active_skill).distinct()
 
-    paginator = Paginator(projects_qs, 12)
-    page_obj = paginator.get_page(request.GET.get("page"))
+    page_obj = paginate_queryset(
+        projects_qs, request.GET.get("page"), PROJECTS_PER_PAGE
+    )
     context = {
         "projects": page_obj,
         "page_obj": page_obj,
@@ -96,11 +91,16 @@ def edit_project_view(request, project_id: int):
 
 @login_required(login_url="/users/login/")
 def complete_project_view(request, project_id: int):
-    project = get_object_or_404(Project, pk=project_id)
+    project = Project.objects.filter(pk=project_id).first()
+    if project is None:
+        return JsonResponse(
+            {"status": "error", "message": "Project not found"},
+            status=HTTPStatus.NOT_FOUND,
+        )
     if not _can_manage_project(request.user, project):
-        return JsonResponse({"status": "error"}, status=403)
+        return JsonResponse({"status": "error"}, status=HTTPStatus.FORBIDDEN)
     if project.status != Project.STATUS_OPEN:
-        return JsonResponse({"status": "error"}, status=400)
+        return JsonResponse({"status": "error"}, status=HTTPStatus.BAD_REQUEST)
     project.status = Project.STATUS_CLOSED
     project.save(update_fields=["status"])
     return JsonResponse({"status": "ok", "project_status": project.status})
@@ -108,12 +108,19 @@ def complete_project_view(request, project_id: int):
 
 @login_required(login_url="/users/login/")
 def toggle_participate_view(request, project_id: int):
-    project = get_object_or_404(
-        Project.objects.prefetch_related("participants"), pk=project_id
+    project = (
+        Project.objects.prefetch_related("participants").filter(pk=project_id).first()
     )
-    if request.user == project.owner:
-        return JsonResponse({"status": "error"}, status=403)
-    if request.user in project.participants.all():
+    if project is None:
+        return JsonResponse(
+            {"status": "error", "message": "Project not found"},
+            status=HTTPStatus.NOT_FOUND,
+        )
+    if request.user.id == project.owner_id:
+        return JsonResponse({"status": "error"}, status=HTTPStatus.FORBIDDEN)
+
+    participant = project.participants.filter(pk=request.user.pk).exists()
+    if participant:
         project.participants.remove(request.user)
         participant = False
     else:
@@ -127,27 +134,35 @@ def project_skill_suggestions_view(request):
     skills = Skill.objects.all()
     if query:
         skills = skills.filter(name__istartswith=query)
-    skills = skills.order_by("name").values("id", "name")[:10]
+    skills = skills.order_by("name").values("id", "name")[:SKILL_SUGGESTIONS_LIMIT]
     return JsonResponse(list(skills), safe=False)
 
 
 @login_required(login_url="/users/login/")
 def add_project_skill_view(request, project_id: int):
-    project = get_object_or_404(
-        Project.objects.prefetch_related("skills"), pk=project_id
-    )
+    project = Project.objects.prefetch_related("skills").filter(pk=project_id).first()
+    if project is None:
+        return JsonResponse(
+            {"status": "error", "message": "Project not found"},
+            status=HTTPStatus.NOT_FOUND,
+        )
     if not _can_manage_project(request.user, project):
-        return JsonResponse({"status": "error"}, status=403)
+        return JsonResponse({"status": "error"}, status=HTTPStatus.FORBIDDEN)
 
     data = _json_body(request)
     skill = None
     created = False
     if data.get("skill_id"):
-        skill = get_object_or_404(Skill, pk=data["skill_id"])
+        skill = Skill.objects.filter(pk=data["skill_id"]).first()
+        if skill is None:
+            return JsonResponse(
+                {"status": "error", "message": "Skill not found"},
+                status=HTTPStatus.NOT_FOUND,
+            )
     else:
         name = str(data.get("name", "")).strip()
         if not name:
-            return JsonResponse({"status": "error"}, status=400)
+            return JsonResponse({"status": "error"}, status=HTTPStatus.BAD_REQUEST)
         skill = Skill.objects.filter(name__iexact=name).first()
         if skill is None:
             skill = Skill.objects.create(name=name)
@@ -172,14 +187,22 @@ def add_project_skill_view(request, project_id: int):
 
 @login_required(login_url="/users/login/")
 def remove_project_skill_view(request, project_id: int, skill_id: int):
-    project = get_object_or_404(
-        Project.objects.prefetch_related("skills"), pk=project_id
-    )
+    project = Project.objects.prefetch_related("skills").filter(pk=project_id).first()
+    if project is None:
+        return JsonResponse(
+            {"status": "error", "message": "Project not found"},
+            status=HTTPStatus.NOT_FOUND,
+        )
     if not _can_manage_project(request.user, project):
-        return JsonResponse({"status": "error"}, status=403)
+        return JsonResponse({"status": "error"}, status=HTTPStatus.FORBIDDEN)
 
-    skill = get_object_or_404(Skill, pk=skill_id)
+    skill = Skill.objects.filter(pk=skill_id).first()
+    if skill is None:
+        return JsonResponse(
+            {"status": "error", "message": "Skill not found"},
+            status=HTTPStatus.NOT_FOUND,
+        )
     if not project.skills.filter(pk=skill.pk).exists():
-        return JsonResponse({"status": "error"}, status=400)
+        return JsonResponse({"status": "error"}, status=HTTPStatus.BAD_REQUEST)
     project.skills.remove(skill)
     return JsonResponse({"status": "ok", "removed": True})
